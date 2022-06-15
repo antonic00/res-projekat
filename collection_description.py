@@ -4,4 +4,4 @@ class Collection_Description:
     def __init__(self, id, dataset):
         self.id = id
         self.dataset = dataset  
-        self.historical_colection = Historical_Collection()
+        self.historical_collection = Historical_Collection()
