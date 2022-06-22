@@ -25,11 +25,33 @@ class Load_Balancer:
     
     def posalji_podatke(self):
             buffer = list()
-            
+            novi_ciklus = 0
+            trenutni_soket = 0
             while(True):
                 data = self.writer_socket.recv(4096) 
                 try:
-                    (kod, vrijednost) = pickle.loads(data)   
+                    (kod, vrijednost) = pickle.loads(data)
+                    if novi_ciklus == 0:
+                        novi_ciklus = 1
+                except ValueError:
+                    try:
+                        poruka = pickle.loads(data)
+                        if(poruka == "zaustavi"):
+                            while True:
+                                podaci = pickle.dumps(buffer[0])
+                                print(len(buffer))
+                                buffer.pop(0)
+                                self.worker_socket[trenutni_soket].send(podaci)
+                                if len(buffer) == 0:
+                                    break
+                                trenutni_soket += 1
+                                if trenutni_soket == self.broj_workera.get_broj_workera() + 1:
+                                    trenutni_soket = 0
+                            novi_ciklus = 0
+                            continue
+                    except Exception as e:
+                        print(e)
+                        exit()
                 except Exception as e:
                     print(e)
                     exit()
@@ -41,8 +63,6 @@ class Load_Balancer:
                 description.dodaj_u_listu(kod, vrijednost)
 
                 buffer.append(description)
-                podaci = pickle.dumps(buffer)
-                self.worker_socket[0].send(podaci)
 
     def priprema_soketa(self):
             self.load_balancer_to_worker.bind((socket.gethostname(), 8001))
