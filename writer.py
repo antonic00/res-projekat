@@ -16,7 +16,7 @@ lista_kodova = [
 
 class Writer:
 
-    def __init__(self):
+    def _init_(self):
         self.writer_soket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     def posalji_podatke(self):
         while(True):
@@ -41,9 +41,15 @@ class Writer:
     def dobavi_kod(self, broj):
         return lista_kodova[broj]
 
+    def inicijalizacija_paljenja(self):
+        add = "add"
+        podaci = pickle.dumps(add)
+        self.writer_soket.send(podaci)
 
-if __name__ == "__main__" :
-
+if _name_ == "_main_" :
+    writer = Writer()
+    if writer.konektuj_sa_load_balancerom() == False:
+        exit()
 
     while(True):
         print("Izaberite jednu od ponudjenih opcija:")
@@ -53,15 +59,9 @@ if __name__ == "__main__" :
         odgovor = input()
 
         if(odgovor == "1"):
-            writer = Writer()
-            if writer.konektuj_sa_load_balancerom():
-                 writer.posalji_podatke()
-            else: 
-                exit()
-
+            writer.posalji_podatke()
         if(odgovor == "2"):
-            print("Usao u 2")
+            writer.inicijalizacija_paljenja()
+            print("Upaljen novi Worker.\n")
         if(odgovor == "3"):
             print("Usao u 3")
-
-
