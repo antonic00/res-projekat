@@ -1,7 +1,9 @@
+import os
 import pickle
 import random
 import socket
 from time import sleep
+import time
 
 lista_kodova = [
     "CODE_ANALOG",
@@ -18,17 +20,23 @@ class Writer:
 
     def __init__(self):
         self.writer_soket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    def posalji_podatke(self):
-        while(True):
-            
-            kod = self.dobavi_kod(random.randint(0, 7))
-            vrijednost =  random.randint(0,100)
-            
-            podaci = pickle.dumps((kod, vrijednost))
-            sleep(2)
-            self.writer_soket.send(podaci)
-            print(kod, vrijednost)
     
+    def posalji_podatke(self):
+            vrijeme_prikupljanja = time.time()
+            while(True):
+                kod = self.dobavi_kod(random.randint(0, 7))
+                vrijednost =  random.randint(1,100)
+
+                podaci = pickle.dumps((kod, vrijednost))
+                sleep(2)
+                self.writer_soket.send(podaci)
+                print(kod, vrijednost)
+
+                if((time.time() - vrijeme_prikupljanja) >= 11):
+                    podaci = pickle.dumps("zaustavi")
+                    self.writer_soket.send(podaci)
+                    break
+        
     def konektuj_sa_load_balancerom(self):
         try:
             self.writer_soket.connect((socket.gethostname(), 1000))
@@ -41,9 +49,20 @@ class Writer:
     def dobavi_kod(self, broj):
         return lista_kodova[broj]
 
+    def inicijalizacija_gasenja(self):
+        poruka = "exit"
+        podaci = pickle.dumps(poruka)
+        self.writer_soket.send(podaci)
+    
+    def inicijalizacija_paljenja(self):
+        add = "add"
+        podaci = pickle.dumps(add)
+        self.writer_soket.send(podaci)
 
 if __name__ == "__main__" :
-
+    writer = Writer()
+    if writer.konektuj_sa_load_balancerom() == False:
+        exit()
 
     while(True):
         print("Izaberite jednu od ponudjenih opcija:")
@@ -53,15 +72,9 @@ if __name__ == "__main__" :
         odgovor = input()
 
         if(odgovor == "1"):
-            writer = Writer()
-            if writer.konektuj_sa_load_balancerom():
-                 writer.posalji_podatke()
-            else: 
-                exit()
-
+            writer.posalji_podatke()
         if(odgovor == "2"):
-            print("Usao u 2")
+            writer.inicijalizacija_paljenja()
+            print("Upaljen novi Worker.\n")
         if(odgovor == "3"):
-            print("Usao u 3")
-
-
+            writer.inicijalizacija_gasenja()
