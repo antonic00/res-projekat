@@ -1,3 +1,4 @@
+
 import pickle
 import random
 import socket
@@ -41,6 +42,11 @@ class Writer:
     def dobavi_kod(self, broj):
         return lista_kodova[broj]
 
+    def inicijalizacija_gasenja(self):
+        poruka = "exit"
+        podaci = pickle.dumps(poruka)
+        self.writer_soket.send(podaci)
+
     def inicijalizacija_paljenja(self):
         add = "add"
         podaci = pickle.dumps(add)
@@ -64,4 +70,4 @@ if _name_ == "_main_" :
             writer.inicijalizacija_paljenja()
             print("Upaljen novi Worker.\n")
         if(odgovor == "3"):
-            print("Usao u 3")
+            writer.inicijalizacija_gasenja()
