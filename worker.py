@@ -8,7 +8,7 @@ from collection_description import Collection_Description
 
 
 class Worker:
-    def _init_(self):
+    def __init__(self):
         self.worker_sa_load_balancerom = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.baza = None
         self.worker_sa_readerom = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -38,20 +38,28 @@ class Worker:
                 print(collection_description.id)
                 #print(collection_description.dataset)
                 for item in collection_description.historical_collection.worker_properties:
-                    podaci = pickle.dumps((item[0], item[1]))
-                    self.worker_sa_readerom.send(podaci)
                     timestamp = datetime.now()
                     rezultat = dobavi_podatak(collection_description.id, self.baza)
                     if len(rezultat) == 0:
                         self.dodaj_element(collection_description.id, collection_description.dataset, item[0], item[1], timestamp)
+                        podaci = pickle.dumps((item[0], item[1]))
+                        self.worker_sa_readerom.send(podaci)
                     else:
                         iz_baze = rezultat[0]
                         #print(iz_baze[0])
-
+                        if(item[0] == 'CODE_DIGITAL'):
+                            self.update_element(collection_description.id, collection_description.dataset, item[1])
+                            #print("code digital u pitanju preskocio deadband")
+                            podaci = pickle.dumps((item[0], item[1]))
+                            self.worker_sa_readerom.send(podaci)
+                            continue
                         deadband = self.izracunaj_deadband(iz_baze[0], item[1])
                         #print(deadband)
-                        if deadband <=2 :
+                        
+                        if deadband <=2:
                             self.update_element(collection_description.id, collection_description.dataset, item[1])
+                            podaci = pickle.dumps((item[0], item[1]))
+                            self.worker_sa_readerom.send(podaci)
                             print("Odradio update")
                         else:
                             print("ID vec postoji u bazi. Deadband ne dozvoljava upis.\n")
@@ -84,10 +92,13 @@ class Worker:
         self.baza.commit()
 
     def izracunaj_deadband(self, iz_baze, pristigla_vrednost):
-        deadband = abs(pristigla_vrednost - iz_baze) / iz_baze * 100
+        try:
+            deadband = abs(pristigla_vrednost - iz_baze) / iz_baze * 100
+        except ZeroDivisionError:
+            return 100
         return deadband
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     worker = Worker()
     if worker.konektuj_sa_load_balancerom():
         print("uspesna konekcija sa LB.\n")
