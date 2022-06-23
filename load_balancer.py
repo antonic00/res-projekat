@@ -13,7 +13,7 @@ class Load_Balancer:
         self.writer_socket = None
         self.worker_socket = list()
         self.broj_workera = Broj_Workera()
-    def konekcija_sa_writerom(self):
+    def konekcija_sa_writerom(self):# pragma: no cover
         try:
             self.load_balancer_to_writer.bind((socket.gethostname(), 1000))
             self.load_balancer_to_writer.listen(4)
@@ -66,10 +66,10 @@ class Load_Balancer:
                             continue
                     except Exception as e:
                         print(e)
-                        exit()
+                        return False
                 except Exception as e:
                     print(e)
-                    exit()
+                    return False
 
                 id = random.randint(0, 100)
                 dataset = self.odredi_data_set(kod)
@@ -79,11 +79,11 @@ class Load_Balancer:
 
                 buffer.append(description)
 
-    def priprema_soketa(self):
+    def priprema_soketa(self):# pragma: no cover
             self.load_balancer_to_worker.bind((socket.gethostname(), 8001))
             self.load_balancer_to_worker.listen(4)
             
-    def konekcija_sa_workerom(self):
+    def konekcija_sa_workerom(self):# pragma: no cover
         try:
             print("Slusam...")
             konekcija, adresa = self.load_balancer_to_worker.accept()
@@ -93,7 +93,7 @@ class Load_Balancer:
             return False
         return True
 
-    def dodaj_u_listu(self, konekcija):
+    def dodaj_u_listu(self, konekcija):# pragma: no cover
         self.worker_socket.append(konekcija)
         self.broj_workera.povecaj_broj_workera()
 
@@ -112,13 +112,15 @@ class Load_Balancer:
         if code in ["CODE_CONSUMER", "CODE_SOURCE"]:
             return 4
 
+    def main(self):
+        if self.konekcija_sa_writerom():
+            print("Uspesna konekcija sa writerom")
+            # if load_balancer.konekcija_sa_workerom():
+            #    print("Konekcija sa workerom uspesna.")
+            self.priprema_soketa()
+            if self.posalji_podatke() == False:
+                exit()
 
-if _name_ == "_main_":
+if __name__ == "__main__":# pragma: no cover
     load_balancer = Load_Balancer()
-
-    if load_balancer.konekcija_sa_writerom():
-        print("Uspesna konekcija sa writerom")
-        #if load_balancer.konekcija_sa_workerom():
-        #    print("Konekcija sa workerom uspesna.")
-        load_balancer.priprema_soketa()
-        load_balancer.posalji_podatke()
+    load_balancer.main()
