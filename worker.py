@@ -35,8 +35,7 @@ class Worker:
             collection_description = Collection_Description(buffer.id, buffer.dataset)
             for item in buffer.lista_itema :
                 collection_description.historical_collection.dodaj_u_niz_propertija(item[0], item[1]) 
-                print(collection_description.id)
-                #print(collection_description.dataset)
+                print('Stigao novi podatak sa id-om: ', collection_description.id)
                 for item in collection_description.historical_collection.worker_properties:
                     timestamp = datetime.now()
                     rezultat = dobavi_podatak(collection_description.id, self.baza)
@@ -46,15 +45,13 @@ class Worker:
                         self.worker_sa_readerom.send(podaci)
                     else:
                         iz_baze = rezultat[0]
-                        #print(iz_baze[0])
                         if(item[0] == 'CODE_DIGITAL'):
                             self.update_element(collection_description.id, collection_description.dataset, item[1])
-                            #print("code digital u pitanju preskocio deadband")
+                            print("CODE_DIGITAL je u pitanju, preskocen deadband\n")
                             podaci = pickle.dumps((item[0], item[1]))
                             self.worker_sa_readerom.send(podaci)
                             continue
                         deadband = self.izracunaj_deadband(iz_baze[0], item[1])
-                        #print(deadband)
                         
                         if deadband <=2:
                             self.update_element(collection_description.id, collection_description.dataset, item[1])
@@ -63,9 +60,6 @@ class Worker:
                             print("Odradio update")
                         else:
                             print("ID vec postoji u bazi. Deadband ne dozvoljava upis.\n")
-
-
-  
 
     def dodaj_element(self, id, dataset, code, value, timestamp):
         my_cursor = self.baza.cursor()
@@ -102,5 +96,5 @@ if __name__ == "__main__": # pragma: no cover
     worker = Worker()
     if worker.konektuj_sa_load_balancerom():
         print("uspesna konekcija sa LB.\n")
-        worker.worker_sa_readerom.connect((socket.gethostname(), 9000))
+        worker.worker_sa_readerom.connect((socket.gethostname(), 10000))
         worker.primi_podatke()
