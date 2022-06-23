@@ -5,10 +5,10 @@ from database_functions import dobavi_podatak, konekcija
 import socket
 
 class Reader:
-    def __init__(self):
+    def __init__(self): # pragma: no cover
         self.reader_to_worker = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.baza = None
-    def konektuj_sa_workerom(self):  
+    def konektuj_sa_workerom(self): # pragma: no cover
         try:
             soket, adresa = self.reader_to_worker.accept()
         except socket.error:
@@ -44,7 +44,7 @@ class Reader:
                 print(line)
 
 
-    def priprema_soketa(self):
+    def priprema_soketa(self): # pragma: no cover
             self.reader_to_worker.bind((socket.gethostname(), 9000))
             self.reader_to_worker.listen(4)
     
@@ -71,7 +71,7 @@ class Reader:
         rezultat = my_cursor.fetchall()
         return rezultat
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     reader = Reader()
     reader.priprema_soketa()
     while(True):
