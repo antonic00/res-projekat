@@ -1,4 +1,3 @@
-import os
 import pickle
 import random
 import socket
@@ -41,7 +40,7 @@ class Writer:
         try:
             self.writer_soket.connect((socket.gethostname(), 1000))
 
-        except socket.error:
+        except Exception:
             print("Neuspjesna konekcija na loadBalancer.")
             return False
         return True
@@ -59,22 +58,27 @@ class Writer:
         podaci = pickle.dumps(add)
         self.writer_soket.send(podaci)
 
-if __name__ == "__main__" :
+    def main(self):
+        if self.konektuj_sa_load_balancerom() == False:
+            exit()
+
+        while (True):
+            print("Izaberite jednu od ponudjenih opcija:")
+            print("1: Slanje novih informacija")
+            print("2: Paljenje novog Worker-a")
+            print("3: Gasenje postojeceg Worker-a")
+            odgovor = input()
+
+            if (odgovor == "1"):
+                self.posalji_podatke()
+            if (odgovor == "2"):
+                self.inicijalizacija_paljenja()
+                print("Upaljen novi Worker.\n")
+            if (odgovor == "3"):
+                self.inicijalizacija_gasenja()
+                print("Ugasen Worker\n")
+
+
+if __name__ == "__main__" : # pragma: no cover
     writer = Writer()
-    if writer.konektuj_sa_load_balancerom() == False:
-        exit()
-
-    while(True):
-        print("Izaberite jednu od ponudjenih opcija:")
-        print("1: Slanje novih informacija")
-        print("2: Paljenje novog Worker-a")
-        print("3: Gasenje postojeceg Worker-a")
-        odgovor = input()
-
-        if(odgovor == "1"):
-            writer.posalji_podatke()
-        if(odgovor == "2"):
-            writer.inicijalizacija_paljenja()
-            print("Upaljen novi Worker.\n")
-        if(odgovor == "3"):
-            writer.inicijalizacija_gasenja()
+    writer.main()
