@@ -3,14 +3,8 @@ import unittest
 from unittest.mock import patch, MagicMock
 import writer
 
+
 class TestWriter(unittest.TestCase):
-    @patch('writer.socket')
-    def test_posalji_podatke(self, mock_socket_s):
-        test_writer = writer.Writer()
-        mock_socket = MagicMock(socket.socket)
-        mock_socket_s.return_value = mock_socket
-        test_writer.writer_soket = mock_socket
-        self.assertEqual(None, writer.Writer.posalji_podatke(test_writer))
 
     @patch('writer.socket')
     def test_konektuj_sa_load_balancerom_ok(self, mock_socket_s):
@@ -52,6 +46,16 @@ class TestWriter(unittest.TestCase):
         mock_socket_s.return_value = mock_socket
         test_writer.konektuj_sa_load_balancerom = mock_socket
         self.assertEqual(None, writer.Writer.main(test_writer))
+
+    @patch('writer.socket')
+    def test_posalji_podatke(self, mock_socket_s):
+        test_writer = writer.Writer()
+        mock_socket = MagicMock(socket.socket)
+        mock_socket_s.return_value = mock_socket
+        test_writer.writer_soket = mock_socket
+
+        self.assertEqual(None, writer.Writer.posalji_podatke(test_writer))
+
 
 
 if __name__ == '__main__':
