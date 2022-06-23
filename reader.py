@@ -1,70 +1,122 @@
-import pickle
-from socket import socket
-from _thread import *
-from database_functions import dobavi_podatak, konekcija
+import os
 import socket
+import pickle
+from time import sleep
+from broj_workera import Broj_Workera
+from description import Description
+import random
 
-class Reader:
-    def __init__(self): # pragma: no cover
-        self.reader_to_worker = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.baza = None
-    def konektuj_sa_workerom(self): # pragma: no cover
+class Load_Balancer:
+    def __init__(self):
+        self.load_balancer_to_writer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.load_balancer_to_worker = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.writer_socket = None
+        self.worker_socket = list()
+        self.broj_workera = Broj_Workera()
+    def konekcija_sa_writerom(self):# pragma: no cover
         try:
-            soket, adresa = self.reader_to_worker.accept()
+            self.load_balancer_to_writer.bind((socket.gethostname(), 10001))
+            self.load_balancer_to_writer.listen(4)
+            print("Slusam...")
+            konekcija, adresa = self.load_balancer_to_writer.accept()
+            self.writer_socket = konekcija
         except socket.error:
-            print("Neuspesna konekcija sa workerom")
+            print("Neuspjesna konekcija sa writer-om.")
             return False
-        print("Konektovao se sa Workerom.")
-        return soket
+        return True
     
-    def primi_podatke(self, soket):
-        self.baza = konekcija()
-        while(True):
-            data = soket.recv(4096)
-            try:
-                buffer = pickle.loads(data)
-            except EOFError:
-                continue
+    def posalji_podatke(self):
+            buffer = list()
+            novi_ciklus = 0
+            trenutni_soket = 0
+            while(True):
+                data = self.writer_socket.recv(4096) 
+                try:
+                    (kod, vrijednost) = pickle.loads(data)
+                    if novi_ciklus == 0:
+                        novi_ciklus = 1
+                except ValueError:
+                    try:
+                        poruka = pickle.loads(data)
+                        if(poruka == "exit"):
+                            self.gasi_workera()
+                            self.worker_socket.pop(self.broj_workera.get_broj_workera())
+                            self.broj_workera.smanji_broj_workera()
+                            print("Ugasio workera")
+                            continue
+                        if(poruka == "add"):
+                            os.system("start cmd /k python worker.py")
+                            load_balancer.konekcija_sa_workerom()
+                            continue
+                        if(poruka == "zaustavi"):
+                            while True:
+                                sleep(1)
+                                podaci = pickle.dumps(buffer[0])
+                                #print(buffer[0].id)
+                                buffer.pop(0)
+                                self.worker_socket[trenutni_soket].send(podaci)
+                                if len(buffer) == 0:
+                                    break
+                                trenutni_soket += 1
+                                if trenutni_soket == self.broj_workera.get_broj_workera() + 1:
+                                    trenutni_soket = 0
+                            novi_ciklus = 0
+                            continue
+                    except Exception as e:
+                        print(e)
+                        return False
+                except Exception as e:
+                    print(e)
+                    return False
 
-            kod = buffer[0]
-            vrednost = buffer[1]
+                id = random.randint(0, 100)
+                dataset = self.odredi_data_set(kod)
+                description = Description(id, dataset)
 
-            rezultat = self.citanje_iz_baze(self.baza, kod)
+                description.dodaj_u_listu(kod, vrijednost)
+
+                buffer.append(description)
+
+    def priprema_soketa(self):# pragma: no cover
+            self.load_balancer_to_worker.bind((socket.gethostname(), 8001))
+            self.load_balancer_to_worker.listen(4)
             
-            for line in rezultat:
-                print(line)
+    def konekcija_sa_workerom(self):# pragma: no cover
+        try:
+            print("Slusam...")
+            konekcija, adresa = self.load_balancer_to_worker.accept()
+            self.dodaj_u_listu(konekcija)
+        except socket.error:
+            print("Neuspesna konekcija sa Workerom")
+            return False
+        return True
 
+    def dodaj_u_listu(self, konekcija):# pragma: no cover
+        self.worker_socket.append(konekcija)
+        self.broj_workera.povecaj_broj_workera()
 
-    def priprema_soketa(self): # pragma: no cover
-            self.reader_to_worker.bind((socket.gethostname(), 10000))
-            self.reader_to_worker.listen(4)
+    def gasi_workera(self):
+        podaci = pickle.dumps("exit")
+        self.worker_socket[self.broj_workera.get_broj_workera()].send(podaci)
     
-    def citanje_iz_baze(self, baza, kod):
-        my_cursor = baza.cursor()
-        lista = list()
-        lista.append(kod)
-        my_cursor.execute("SELECT * FROM baza_podataka.dataset_1 WHERE dataset_1.code = %s", lista)
-        rezultat = my_cursor.fetchall()
-        if len(rezultat) != 0:
-            return rezultat
 
-        my_cursor.execute("SELECT * FROM baza_podataka.dataset_2 WHERE dataset_2.code = %s", lista)
-        rezultat = my_cursor.fetchall()
-        if len(rezultat) != 0:
-            return rezultat
+    def odredi_data_set(self, code):
+        if code in ["CODE_ANALOG", "CODE_DIGITAL"]:
+            return 1
+        if code in ["CODE_CUSTOM", "CODE_LIMITSET"]:
+            return 2
+        if code in ["CODE_SINGLENODE", "CODE_MULTIPLENODE"]:
+            return 3
+        if code in ["CODE_CONSUMER", "CODE_SOURCE"]:
+            return 4
 
-        my_cursor.execute("SELECT * FROM baza_podataka.dataset_3 WHERE dataset_3.code = %s", lista)
-        rezultat = my_cursor.fetchall()
-        if len(rezultat) != 0:
-            return rezultat
+    def main(self):
+        if self.konekcija_sa_writerom():
+            print("Uspesna konekcija sa writerom")
+            self.priprema_soketa()
+            if self.posalji_podatke() == False:
+                exit()
 
-        my_cursor.execute("SELECT * FROM baza_podataka.dataset_4 WHERE dataset_4.code = %s", lista)
-        rezultat = my_cursor.fetchall()
-        return rezultat
-
-if __name__ == "__main__": # pragma: no cover
-    reader = Reader()
-    reader.priprema_soketa()
-    while(True):
-        soket = reader.konektuj_sa_workerom()
-        start_new_thread(reader.primi_podatke, (soket, ))
+if __name__ == "__main__":# pragma: no cover
+    load_balancer = Load_Balancer()
+    load_balancer.main()
