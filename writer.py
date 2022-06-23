@@ -38,7 +38,7 @@ class Writer:
         
     def konektuj_sa_load_balancerom(self):
         try:
-            self.writer_soket.connect((socket.gethostname(), 1000))
+            self.writer_soket.connect((socket.gethostname(), 10001))
 
         except Exception:
             print("Neuspjesna konekcija na loadBalancer.")
