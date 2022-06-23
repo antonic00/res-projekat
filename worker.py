@@ -8,11 +8,11 @@ from collection_description import Collection_Description
 
 
 class Worker:
-    def __init__(self):
+    def __init__(self): # pragma: no cover
         self.worker_sa_load_balancerom = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.baza = None
         self.worker_sa_readerom = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    def konektuj_sa_load_balancerom(self):
+    def konektuj_sa_load_balancerom(self): # pragma: no cover
         try:
             self.worker_sa_load_balancerom.connect((socket.gethostname(), 8001))
         except socket.error:
@@ -98,7 +98,7 @@ class Worker:
             return 100
         return deadband
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     worker = Worker()
     if worker.konektuj_sa_load_balancerom():
         print("uspesna konekcija sa LB.\n")
