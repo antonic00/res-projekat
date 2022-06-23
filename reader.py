@@ -30,22 +30,13 @@ class Reader:
             vrednost = buffer[1]
 
             rezultat = self.citanje_iz_baze(self.baza, kod)
-
-            '''if kod in ["CODE_ANALOG", "CODE_DIGITAL"]:
-                rezultat = self.citanje_iz_baze(kod, self.baza, 'baza_podataka.dataset_1', 'dataset_1.code')
-            if kod in ["CODE_CUSTOM", "CODE_LIMITSET"]:
-                rezultat = self.citanje_iz_baze(kod, self.baza, 'baza_podataka.dataset_2', 'dataset_2.code')
-            if kod in ["CODE_SINGLENODE", "CODE_MULTIPLENODE"]:
-                rezultat = self.citanje_iz_baze(kod, self.baza, 'baza_podataka.dataset_3', 'dataset_3.code')
-            if kod in ["CODE_CONSUMER", "CODE_SOURCE"]:
-                rezultat = self.citanje_iz_baze(kod, self.baza, 'baza_podataka.dataset_4', 'dataset_4.code')'''
             
             for line in rezultat:
                 print(line)
 
 
     def priprema_soketa(self): # pragma: no cover
-            self.reader_to_worker.bind((socket.gethostname(), 9000))
+            self.reader_to_worker.bind((socket.gethostname(), 10000))
             self.reader_to_worker.listen(4)
     
     def citanje_iz_baze(self, baza, kod):
@@ -77,10 +68,3 @@ if __name__ == "__main__": # pragma: no cover
     while(True):
         soket = reader.konektuj_sa_workerom()
         start_new_thread(reader.primi_podatke, (soket, ))
-    
-    '''
-        if reader.konektuj_sa_workerom():
-        print("uspesna konekcija sa Workerom.\n")
-        reader.primi_podatke()
-    '''
-
